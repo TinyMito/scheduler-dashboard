@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import classnames from "classnames";
 import Loading from "./Loading";
 import Panel from "./Panel";
+import axios from "axios";
 
 const data = [
   {
@@ -29,8 +30,28 @@ const data = [
 class Dashboard extends Component {
   state = {
     loading: false,
-    focused: null
+    focused: null,
+    days: [],
+    appointments: {},
+    interviewers: {}
   };
+
+  componentDidMount() {
+    // Get the localStorage object, needs to use .parse to convert to js
+    const focused = JSON.parse(localStorage.getItem("focused")); 
+
+    if (focused) {
+      // if this is true (not null) setState to reflect the changes
+      this.setState({focused});
+    }
+  }
+  
+  componentDidUpdate(prevProps, prevState) {
+    // If the locatStorage different than current state, update the storage .stringify back to storage.
+    if (prevState.focused !== this.state.focused) { 
+      localStorage.setItem("focused", JSON.stringify(this.state.focused));
+    }
+  }
 
   selectPanel(id){
     this.setState(prev => ({
