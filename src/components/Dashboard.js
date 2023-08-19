@@ -9,7 +9,7 @@ import {
   getMostPopularDay,
   getInterviewsPerDay
  } from "helpers/selectors";
- 
+ import { setInterview } from "helpers/reducers";
 
  const data = [
   {
@@ -53,6 +53,7 @@ class Dashboard extends Component {
       this.setState({focused});
     }
 
+    // Get API data on Promise
     Promise.all([
       axios.get("/api/days"),
       axios.get("/api/appointments"),
@@ -65,6 +66,20 @@ class Dashboard extends Component {
         interviewers: interviewers.data
       });
     });
+
+    // Websocket point to .env.development REACT_APP_WEBSOCKET_URL
+    this.socket = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL);
+
+    // onmessage triggers update
+    this.socket.onmessage = event => {
+      const data = JSON.parse(event.data);
+    
+      if (typeof data === "object" && data.type === "SET_INTERVIEW") {
+        this.setState(previousState =>
+          setInterview(previousState, data.id, data.interview)
+        );
+      }
+    };
   }
   
   componentDidUpdate(prevProps, prevState) {
@@ -72,6 +87,10 @@ class Dashboard extends Component {
     if (prevState.focused !== this.state.focused) { 
       localStorage.setItem("focused", JSON.stringify(this.state.focused));
     }
+  }
+
+  componentWillUnmount() {
+    this.socket.close();
   }
 
   selectPanel(id){
